@@ -838,10 +838,10 @@ describe("PUT /api/tasks/:id — Bug #7 (intégration)", () => {
 })
 
 /**
- * Bug #8 — dueDate null comptées en retard dans overdue (stats).
+ * Bug #8 (corrigé) — dueDate null exclues de overdue (stats).
  * npm test -- --testPathPattern=tasks.controller.test.js
  */
-describe("getStats — Bug #8 (dueDate null exclues de overdue)", () => {
+describe("getStats — Bug #8 (corrigé — dueDate null exclues de overdue)", () => {
   let TaskModel
   let tasksController
   let req

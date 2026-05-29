@@ -133,8 +133,9 @@ const tasksController = {
 
     const now = new Date()
     const overdue = tasks.filter((task) => {
+      if (task.dueDate == null) return false
       const due = new Date(task.dueDate)
-      return due < now
+      return !Number.isNaN(due.getTime()) && due < now
     }).length
 
     res.json({
