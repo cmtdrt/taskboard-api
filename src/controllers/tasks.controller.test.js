@@ -5,6 +5,7 @@ const request = require("supertest")
 const seedPath = path.join(__dirname, "../../data/seed.json")
 const seedTasks = JSON.parse(fs.readFileSync(seedPath, "utf-8"))
 const NULL_DUE_DATE_TASK_IDS = [7, 14, 19, 25]
+const DONE_OVERDUE_TASK_IDS = [1, 2, 12, 17, 26]
 
 const API_KEY = "secret-key-123"
 const VALID_STATUSES = ["todo", "doing", "done"]
@@ -30,6 +31,16 @@ function countOverdueExcludingNullDueDate(tasks, now = new Date()) {
 
 function countOverdueWithBuggyLogic(tasks, now = new Date()) {
   return tasks.filter((task) => new Date(task.dueDate) < now).length
+}
+
+/** Comportement attendu après bugs #8 et #9 */
+function countOverdueExpected(tasks, now = new Date()) {
+  return tasks.filter((task) => {
+    if (task.status === "done") return false
+    if (task.dueDate == null) return false
+    const due = new Date(task.dueDate)
+    return !Number.isNaN(due.getTime()) && due < now
+  }).length
 }
 
 /**
@@ -920,6 +931,93 @@ describe("GET /api/tasks/stats — Bug #8 (intégration)", () => {
 
     expect(response.body.data.overdue).toBeLessThanOrEqual(
       countOverdueWithBuggyLogic(seedTasks) - nullDueInSeed
+    )
+  })
+})
+
+/**
+ * Bug #9 — tâches done incluses dans overdue (stats).
+ * npm test -- --testPathPattern=tasks.controller.test.js
+ */
+describe("getStats — Bug #9 (tâches done exclues de overdue)", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      getAll: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+
+    req = {}
+    res = mockRes()
+  })
+
+  it("ne doit pas compter une tâche done avec échéance passée", () => {
+    TaskModel.getAll.mockReturnValue([
+      { id: 1, status: "done", dueDate: "2024-01-01" },
+      { id: 2, status: "todo", dueDate: "2024-01-01" },
+      { id: 3, status: "doing", dueDate: "2030-01-01" },
+    ])
+
+    tasksController.getStats(req, res)
+
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: expect.objectContaining({ overdue: 1 }),
+    })
+  })
+
+  it("devrait renvoyer overdue à 0 si seules des tâches done sont en retard", () => {
+    TaskModel.getAll.mockReturnValue([
+      { id: 1, status: "done", dueDate: "2024-01-01" },
+      { id: 2, status: "done", dueDate: "2023-06-15" },
+    ])
+
+    tasksController.getStats(req, res)
+
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: expect.objectContaining({ overdue: 0 }),
+    })
+  })
+})
+
+describe("GET /api/tasks/stats — Bug #9 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  it("ne doit pas inclure les tâches done du seed dans overdue", async () => {
+    const expectedOverdue = countOverdueExpected(seedTasks)
+    const withDoneIncluded = countOverdueExcludingNullDueDate(seedTasks)
+
+    expect(DONE_OVERDUE_TASK_IDS.length).toBeGreaterThan(0)
+    expect(withDoneIncluded).toBeGreaterThan(expectedOverdue)
+
+    const response = await request(app).get("/api/tasks/stats")
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.overdue).toBe(expectedOverdue)
+    expect(response.body.data.overdue).toBeLessThan(withDoneIncluded)
+  })
+
+  it("overdue doit exclure les ids done en retard du seed (1, 2, 12, 17, 26)", async () => {
+    const response = await request(app).get("/api/tasks/stats")
+
+    expect(response.body.data.overdue).toBe(
+      countOverdueExpected(seedTasks)
+    )
+    expect(response.body.data.overdue).toBe(
+      countOverdueExcludingNullDueDate(seedTasks) - DONE_OVERDUE_TASK_IDS.length
     )
   })
 })
