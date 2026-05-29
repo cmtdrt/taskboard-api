@@ -698,7 +698,7 @@ const TASK_3_CREATED_AT = "2024-01-10T10:00:00Z"
 const FAKE_CREATED_AT = "2099-01-01T00:00:00Z"
 
 /**
- * Bug #7 — createdAt modifiable via PUT (champ immuable).
+ * Bug #7 (corrigé) — createdAt et id immuables via PUT.
  * npm test -- --testPathPattern=tasks.controller.test.js
  */
 describe("updateTask — Bug #7 (createdAt immuable)", () => {

@@ -80,7 +80,11 @@ const tasksController = {
       })
     }
 
-    const updated = TaskModel.update(req.params.id, req.body)
+    const updateData = { ...req.body }
+    delete updateData.id
+    delete updateData.createdAt
+
+    const updated = TaskModel.update(req.params.id, updateData)
     res.json({ success: true, data: updated })
   },
 
