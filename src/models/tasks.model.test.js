@@ -143,10 +143,10 @@ describe("GET /api/tasks?priority= — Bug #2 (intégration)", () => {
 })
 
 /**
- * Bug #10 — parseInt sur :id (parsing partiel).
+ * Bug #10 (corrigé) — id : entier strict (plus de parseInt partiel).
  * npm test -- --testPathPattern=tasks.model.test.js
  */
-describe("TaskModel — Bug #10 (id entier strict)", () => {
+describe("TaskModel — Bug #10 (corrigé — id entier strict)", () => {
   let TaskModel
 
   beforeEach(() => {
