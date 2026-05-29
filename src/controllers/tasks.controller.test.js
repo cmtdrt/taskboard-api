@@ -1026,10 +1026,10 @@ describe("GET /api/tasks/stats — Bug #9 (intégration)", () => {
 })
 
 /**
- * Bug #11 — dueDate non validée (POST / PUT).
+ * Bug #11 (corrigé) — dueDate validée (POST / PUT), format YYYY-MM-DD.
  * npm test -- --testPathPattern=tasks.controller.test.js
  */
-describe("createTask / updateTask — Bug #11 (validation dueDate)", () => {
+describe("createTask / updateTask — Bug #11 (corrigé — validation dueDate)", () => {
   let TaskModel
   let tasksController
   let req

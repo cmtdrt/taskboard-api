@@ -3,6 +3,21 @@ const TaskModel = require("../models/tasks.model")
 const VALID_STATUSES = ["todo", "doing", "done"]
 const VALID_PRIORITIES = ["LOW", "MEDIUM", "HIGH"]
 
+function isValidDueDate(dueDate) {
+  if (dueDate === undefined || dueDate === null) return true
+  if (typeof dueDate !== "string" || !dueDate.trim()) return false
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) return false
+
+  const [year, month, day] = dueDate.split("-").map(Number)
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+
+  return (
+    parsed.getUTCFullYear() === year &&
+    parsed.getUTCMonth() === month - 1 &&
+    parsed.getUTCDate() === day
+  )
+}
+
 const tasksController = {
   getTasks(req, res) {
     const { status, assignee, priority } = req.query
@@ -41,6 +56,13 @@ const tasksController = {
       })
     }
 
+    if (!isValidDueDate(dueDate)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid due date",
+      })
+    }
+
     const task = TaskModel.create({
       title,
       description,
@@ -58,7 +80,7 @@ const tasksController = {
       return res.status(404).json({ success: false, error: "Task not found" })
     }
 
-    const { title, status, priority } = req.body
+    const { title, status, priority, dueDate } = req.body
 
     if (title !== undefined && (!title || !String(title).trim())) {
       return res
@@ -77,6 +99,13 @@ const tasksController = {
       return res.status(400).json({
         success: false,
         error: `Priority must be one of: ${VALID_PRIORITIES.join(", ")}`,
+      })
+    }
+
+    if (!isValidDueDate(dueDate)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid due date",
       })
     }
 
