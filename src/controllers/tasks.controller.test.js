@@ -174,7 +174,7 @@ describe("PATCH /api/tasks/:id/move — Bug #3 (intégration)", () => {
   })
 })
 
-describe("updateTask — Bug #4 (validation PUT)", () => {
+describe("updateTask — Bug #4 (corrigé — validation PUT)", () => {
   let TaskModel
   let tasksController
   let req

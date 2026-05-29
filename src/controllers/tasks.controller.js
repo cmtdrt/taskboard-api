@@ -1,6 +1,7 @@
 const TaskModel = require("../models/tasks.model")
 
 const VALID_STATUSES = ["todo", "doing", "done"]
+const VALID_PRIORITIES = ["LOW", "MEDIUM", "HIGH"]
 
 const tasksController = {
   getTasks(req, res) {
@@ -48,6 +49,28 @@ const tasksController = {
     const task = TaskModel.findById(req.params.id)
     if (!task) {
       return res.status(404).json({ success: false, error: "Task not found" })
+    }
+
+    const { title, status, priority } = req.body
+
+    if (title !== undefined && (!title || !String(title).trim())) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Title is required" })
+    }
+
+    if (status !== undefined && !VALID_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Status must be one of: ${VALID_STATUSES.join(", ")}`,
+      })
+    }
+
+    if (priority !== undefined && !VALID_PRIORITIES.includes(priority)) {
+      return res.status(400).json({
+        success: false,
+        error: `Priority must be one of: ${VALID_PRIORITIES.join(", ")}`,
+      })
     }
 
     const updated = TaskModel.update(req.params.id, req.body)
