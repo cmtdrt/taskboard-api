@@ -1,4 +1,4 @@
-# Liste des bugs trouvés de PERRONIÉ Maxence et DROUET Clément
+# Liste des bugs trouvés de [PERRONIÉ Maxence](https://github.com/mxncp85) et [DROUET Clément](https://github.com/cmtdrt)
 
 
 
