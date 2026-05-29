@@ -2,7 +2,10 @@ const request = require("supertest")
 
 const API_KEY = "secret-key-123"
 const VALID_STATUSES = ["todo", "doing", "done"]
+const VALID_PRIORITIES = ["LOW", "MEDIUM", "HIGH"]
 const STATUS_ERROR = `Status must be one of: ${VALID_STATUSES.join(", ")}`
+const PRIORITY_ERROR = `Priority must be one of: ${VALID_PRIORITIES.join(", ")}`
+const TITLE_REQUIRED = "Title is required"
 
 function mockRes() {
   const res = {}
@@ -12,7 +15,6 @@ function mockRes() {
 }
 
 /**
- * Bug #3 (corrigé) — moveTask valide status ∈ VALID_STATUSES (comme createTask).
  * npm test -- --testPathPattern=tasks.controller.test.js
  */
 describe("moveTask — Bug #3 (tests unitaires)", () => {
@@ -166,6 +168,231 @@ describe("PATCH /api/tasks/:id/move — Bug #3 (intégration)", () => {
       .patch("/api/tasks/99999/move")
       .set(authHeader)
       .send({ status: "done" })
+
+    expect(response.status).toBe(404)
+    expect(response.body.error).toBe("Task not found")
+  })
+})
+
+describe("updateTask — Bug #4 (validation PUT)", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  const existingTask = {
+    id: 2,
+    title: "Concevoir la base de données",
+    status: "done",
+    priority: "HIGH",
+    assignee: "bob",
+  }
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      findById: jest.fn(),
+      update: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+
+    req = { params: { id: "2" }, body: {} }
+    res = mockRes()
+    TaskModel.findById.mockReturnValue({ ...existingTask })
+  })
+
+  describe("comportement attendu (aligné sur createTask / README)", () => {
+    it.each(["archived", "invalid", "TODO"])(
+      "devrait retourner 400 pour un status invalide : %s",
+      (status) => {
+        req.body = { status }
+
+        tasksController.updateTask(req, res)
+
+        expect(TaskModel.update).not.toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(400)
+        expect(res.json).toHaveBeenCalledWith({
+          success: false,
+          error: STATUS_ERROR,
+        })
+      }
+    )
+
+    it.each(["urgent", "high", "INVALID"])(
+      "devrait retourner 400 pour une priority invalide : %s",
+      (priority) => {
+        req.body = { priority }
+
+        tasksController.updateTask(req, res)
+
+        expect(TaskModel.update).not.toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(400)
+        expect(res.json).toHaveBeenCalledWith({
+          success: false,
+          error: PRIORITY_ERROR,
+        })
+      }
+    )
+
+    it("devrait retourner 400 pour un title vide", () => {
+      req.body = { title: "" }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).not.toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: TITLE_REQUIRED,
+      })
+    })
+
+    it("devrait retourner 400 pour un title composé uniquement d'espaces", () => {
+      req.body = { title: "   " }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).not.toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: TITLE_REQUIRED,
+      })
+    })
+  })
+
+  describe("mises à jour valides (référence)", () => {
+    it.each(VALID_STATUSES)("devrait accepter un status valide : %s", (status) => {
+      const updated = { ...existingTask, status }
+      TaskModel.update.mockReturnValue(updated)
+      req.body = { status }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).toHaveBeenCalledWith("2", { status })
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: updated })
+    })
+
+    it.each(VALID_PRIORITIES)("devrait accepter une priority valide : %s", (priority) => {
+      const updated = { ...existingTask, priority }
+      TaskModel.update.mockReturnValue(updated)
+      req.body = { priority }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).toHaveBeenCalledWith("2", { priority })
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: updated })
+    })
+
+    it("devrait accepter une mise à jour partielle du title", () => {
+      const updated = { ...existingTask, title: "Nouveau titre" }
+      TaskModel.update.mockReturnValue(updated)
+      req.body = { title: "Nouveau titre" }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).toHaveBeenCalledWith("2", { title: "Nouveau titre" })
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: updated })
+    })
+  })
+
+  describe("cas déjà gérés (référence)", () => {
+    it("devrait retourner 404 si la tâche n'existe pas", () => {
+      TaskModel.findById.mockReturnValue(undefined)
+
+      tasksController.updateTask(req, res)
+
+      expect(res.status).toHaveBeenCalledWith(404)
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: "Task not found",
+      })
+      expect(TaskModel.update).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe("PUT /api/tasks/:id — Bug #4 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  const authHeader = { "x-api-key": API_KEY }
+
+  it("devrait rejeter un status invalide avec 400", async () => {
+    const response = await request(app)
+      .put("/api/tasks/2")
+      .set(authHeader)
+      .send({ status: "archived" })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      success: false,
+      error: STATUS_ERROR,
+    })
+  })
+
+  it("ne doit pas persister un status invalide en base", async () => {
+    await request(app)
+      .put("/api/tasks/3")
+      .set(authHeader)
+      .send({ status: "archived" })
+
+    const task = await request(app)
+      .get("/api/tasks/3")
+      .set(authHeader)
+
+    expect(task.body.data.status).not.toBe("archived")
+  })
+
+  it("devrait rejeter une priority invalide avec 400", async () => {
+    const response = await request(app)
+      .put("/api/tasks/5")
+      .set(authHeader)
+      .send({ priority: "urgent" })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      success: false,
+      error: PRIORITY_ERROR,
+    })
+  })
+
+  it("devrait rejeter un title vide avec 400", async () => {
+    const response = await request(app)
+      .put("/api/tasks/4")
+      .set(authHeader)
+      .send({ title: "" })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      success: false,
+      error: TITLE_REQUIRED,
+    })
+  })
+
+  it("devrait mettre à jour une tâche avec des champs valides", async () => {
+    const response = await request(app)
+      .put("/api/tasks/6")
+      .set(authHeader)
+      .send({ title: "Documentation mise à jour", priority: "LOW" })
+
+    expect(response.status).toBe(200)
+    expect(response.body.success).toBe(true)
+    expect(response.body.data.title).toBe("Documentation mise à jour")
+    expect(response.body.data.priority).toBe("LOW")
+  })
+
+  it("devrait retourner 404 pour une tâche inexistante", async () => {
+    const response = await request(app)
+      .put("/api/tasks/99999")
+      .set(authHeader)
+      .send({ title: "Test" })
 
     expect(response.status).toBe(404)
     expect(response.body.error).toBe("Task not found")
