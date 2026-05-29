@@ -13,6 +13,7 @@ const VALID_PRIORITIES = ["LOW", "MEDIUM", "HIGH"]
 const STATUS_ERROR = `Status must be one of: ${VALID_STATUSES.join(", ")}`
 const PRIORITY_ERROR = `Priority must be one of: ${VALID_PRIORITIES.join(", ")}`
 const TITLE_REQUIRED = "Title is required"
+const DUE_DATE_INVALID = "Invalid due date"
 
 function mockRes() {
   const res = {}
@@ -1021,5 +1022,181 @@ describe("GET /api/tasks/stats — Bug #9 (intégration)", () => {
     expect(response.body.data.overdue).toBe(
       countOverdueExcludingNullDueDate(seedTasks) - DONE_OVERDUE_TASK_IDS.length
     )
+  })
+})
+
+/**
+ * Bug #11 — dueDate non validée (POST / PUT).
+ * npm test -- --testPathPattern=tasks.controller.test.js
+ */
+describe("createTask / updateTask — Bug #11 (validation dueDate)", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+
+    req = { params: { id: "5" }, body: { title: "Test" } }
+    res = mockRes()
+  })
+
+  describe("POST — comportement attendu", () => {
+    it.each(["pas-une-date", "nimporte quoi", "2026-13-40", ""])(
+      "devrait retourner 400 pour dueDate invalide : %j",
+      (dueDate) => {
+        req.body = { title: "Test dueDate", dueDate }
+
+        tasksController.createTask(req, res)
+
+        expect(TaskModel.create).not.toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(400)
+        expect(res.json).toHaveBeenCalledWith({
+          success: false,
+          error: DUE_DATE_INVALID,
+        })
+      }
+    )
+
+    it("devrait accepter une dueDate valide (YYYY-MM-DD)", () => {
+      const created = {
+        id: 50,
+        title: "Test dueDate",
+        dueDate: "2026-06-15",
+        status: "todo",
+        priority: "MEDIUM",
+      }
+      TaskModel.create.mockReturnValue(created)
+      req.body = { title: "Test dueDate", dueDate: "2026-06-15" }
+
+      tasksController.createTask(req, res)
+
+      expect(TaskModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({ dueDate: "2026-06-15" })
+      )
+      expect(res.status).toHaveBeenCalledWith(201)
+    })
+
+    it("devrait accepter l'absence de dueDate", () => {
+      TaskModel.create.mockReturnValue({
+        id: 51,
+        title: "Sans date",
+        dueDate: undefined,
+      })
+      req.body = { title: "Sans date" }
+
+      tasksController.createTask(req, res)
+
+      expect(res.status).toHaveBeenCalledWith(201)
+    })
+  })
+
+  describe("PUT — comportement attendu", () => {
+    beforeEach(() => {
+      TaskModel.findById.mockReturnValue({
+        id: 5,
+        title: "Mettre en place le CI/CD",
+        dueDate: "2024-02-20",
+      })
+    })
+
+    it.each(["pas-une-date", "xyz"])(
+      "devrait retourner 400 pour dueDate invalide : %s",
+      (dueDate) => {
+        req.body = { dueDate }
+
+        tasksController.updateTask(req, res)
+
+        expect(TaskModel.update).not.toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(400)
+        expect(res.json).toHaveBeenCalledWith({
+          success: false,
+          error: DUE_DATE_INVALID,
+        })
+      }
+    )
+
+    it("devrait accepter une dueDate valide", () => {
+      TaskModel.update.mockReturnValue({
+        id: 5,
+        title: "Mettre en place le CI/CD",
+        dueDate: "2026-07-01",
+      })
+      req.body = { dueDate: "2026-07-01" }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).toHaveBeenCalledWith("5", { dueDate: "2026-07-01" })
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: expect.objectContaining({ dueDate: "2026-07-01" }),
+      })
+    })
+  })
+})
+
+describe("POST/PUT dueDate — Bug #11 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  const auth = { "x-api-key": API_KEY }
+
+  it("POST ne doit pas créer une tâche avec dueDate invalide", async () => {
+    const before = await request(app).get("/api/tasks").set(auth)
+    const countBefore = before.body.data.length
+
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(auth)
+      .send({ title: "Date invalide", dueDate: "pas-une-date" })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      success: false,
+      error: DUE_DATE_INVALID,
+    })
+
+    const after = await request(app).get("/api/tasks").set(auth)
+    expect(after.body.data.filter((t) => t.title === "Date invalide")).toHaveLength(0)
+    expect(after.body.data.length).toBe(countBefore)
+  })
+
+  it("PUT ne doit pas persister une dueDate invalide", async () => {
+    const before = await request(app).get("/api/tasks/5").set(auth)
+    const originalDue = before.body.data.dueDate
+
+    const response = await request(app)
+      .put("/api/tasks/5")
+      .set(auth)
+      .send({ dueDate: "nimporte quoi" })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe(DUE_DATE_INVALID)
+
+    const after = await request(app).get("/api/tasks/5").set(auth)
+    expect(after.body.data.dueDate).toBe(originalDue)
+  })
+
+  it("POST doit accepter dueDate au format YYYY-MM-DD", async () => {
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(auth)
+      .send({ title: "Date valide bug 11", dueDate: "2026-08-20" })
+
+    expect(response.status).toBe(201)
+    expect(response.body.data.dueDate).toBe("2026-08-20")
   })
 })
