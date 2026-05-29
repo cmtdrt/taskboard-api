@@ -398,3 +398,170 @@ describe("PUT /api/tasks/:id — Bug #4 (intégration)", () => {
     expect(response.body.error).toBe("Task not found")
   })
 })
+
+describe("createTask — Bug #5 (validation priority POST)", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      create: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+
+    req = { body: { title: "Nouvelle tâche" } }
+    res = mockRes()
+  })
+
+  describe("comportement attendu (README : LOW, MEDIUM, HIGH)", () => {
+    it.each(["urgent", "high", "INVALID", ""])(
+      "devrait retourner 400 pour une priority invalide : %s",
+      (priority) => {
+        req.body = { title: "Test", priority }
+
+        tasksController.createTask(req, res)
+
+        expect(TaskModel.create).not.toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(400)
+        expect(res.json).toHaveBeenCalledWith({
+          success: false,
+          error: PRIORITY_ERROR,
+        })
+      }
+    )
+
+    it.each(VALID_PRIORITIES)("devrait accepter une priority valide : %s", (priority) => {
+      const created = {
+        id: 31,
+        title: "Test",
+        priority,
+        status: "todo",
+        description: "",
+        assignee: null,
+        createdAt: "2026-01-01T00:00:00.000Z",
+      }
+      TaskModel.create.mockReturnValue(created)
+      req.body = { title: "Test", priority }
+
+      tasksController.createTask(req, res)
+
+      expect(TaskModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Test", priority })
+      )
+      expect(res.status).toHaveBeenCalledWith(201)
+      expect(res.json).toHaveBeenCalledWith({ success: true, data: created })
+    })
+
+    it("devrait créer sans priority (défaut MEDIUM côté modèle)", () => {
+      const created = {
+        id: 32,
+        title: "Sans priorité",
+        priority: "MEDIUM",
+        status: "todo",
+      }
+      TaskModel.create.mockReturnValue(created)
+      req.body = { title: "Sans priorité" }
+
+      tasksController.createTask(req, res)
+
+      expect(TaskModel.create).toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalledWith(201)
+    })
+  })
+
+  describe("référence — validations déjà en place", () => {
+    it("devrait toujours exiger un title", () => {
+      req.body = { priority: "HIGH" }
+
+      tasksController.createTask(req, res)
+
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: TITLE_REQUIRED,
+      })
+    })
+
+    it("devrait rejeter un status invalide", () => {
+      req.body = { title: "Test", status: "archived", priority: "HIGH" }
+
+      tasksController.createTask(req, res)
+
+      expect(TaskModel.create).not.toHaveBeenCalled()
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: STATUS_ERROR,
+      })
+    })
+  })
+})
+
+describe("POST /api/tasks — Bug #5 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  const authHeader = { "x-api-key": API_KEY }
+
+  it("devrait rejeter priority=urgent avec 400", async () => {
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({ title: "Test priorité", priority: "urgent" })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      success: false,
+      error: PRIORITY_ERROR,
+    })
+  })
+
+  it("ne doit pas créer une tâche avec une priority invalide", async () => {
+    const before = await request(app).get("/api/tasks").set(authHeader)
+    const countBefore = before.body.data.length
+
+    await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({ title: "Tâche invalide", priority: "urgent" })
+
+    const after = await request(app).get("/api/tasks").set(authHeader)
+    const invalidTasks = after.body.data.filter((t) => t.title === "Tâche invalide")
+
+    expect(after.body.data.length).toBe(countBefore)
+    expect(invalidTasks).toHaveLength(0)
+  })
+
+  it("devrait créer une tâche avec priority=HIGH", async () => {
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({
+        title: "Tâche valide HIGH",
+        priority: "HIGH",
+        status: "todo",
+      })
+
+    expect(response.status).toBe(201)
+    expect(response.body.data.priority).toBe("HIGH")
+    expect(response.body.data.title).toBe("Tâche valide HIGH")
+  })
+
+  it("devrait créer une tâche sans priority (défaut MEDIUM)", async () => {
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({ title: "Tâche défaut priorité" })
+
+    expect(response.status).toBe(201)
+    expect(response.body.data.priority).toBe("MEDIUM")
+  })
+})
