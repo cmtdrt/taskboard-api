@@ -74,6 +74,12 @@ const tasksController = {
         .status(400)
         .json({ success: false, error: "New status is required" })
     }
+    if (!VALID_STATUSES.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: `Status must be one of: ${VALID_STATUSES.join(", ")}`,
+      })
+    }
     const updated = TaskModel.update(req.params.id, { status })
     res.json({ success: true, data: updated })
   },

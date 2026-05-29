@@ -12,7 +12,7 @@ function mockRes() {
 }
 
 /**
- * Bug #3 — moveTask ne valide pas status ∈ VALID_STATUSES.
+ * Bug #3 (corrigé) — moveTask valide status ∈ VALID_STATUSES (comme createTask).
  * npm test -- --testPathPattern=tasks.controller.test.js
  */
 describe("moveTask — Bug #3 (tests unitaires)", () => {
