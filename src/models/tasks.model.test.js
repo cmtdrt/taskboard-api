@@ -141,3 +141,87 @@ describe("GET /api/tasks?priority= — Bug #2 (intégration)", () => {
     expect(response.body.data.some((t) => t.id === 7)).toBe(false)
   })
 })
+
+/**
+ * Bug #10 — parseInt sur :id (parsing partiel).
+ * npm test -- --testPathPattern=tasks.model.test.js
+ */
+describe("TaskModel — Bug #10 (id entier strict)", () => {
+  let TaskModel
+
+  beforeEach(() => {
+    TaskModel = loadFreshModel()
+  })
+
+  describe("comportement attendu — findById", () => {
+    it.each(["12abc", "1.9", "0x10", "abc", ""])(
+      "ne doit pas résoudre un id invalide : %j",
+      (id) => {
+        expect(TaskModel.findById(id)).toBeUndefined()
+      }
+    )
+
+    it("devrait trouver une tâche avec un id numérique valide", () => {
+      const task = TaskModel.findById("12")
+      expect(task).toBeDefined()
+      expect(task.id).toBe(12)
+    })
+  })
+
+  describe("comportement attendu — update / delete", () => {
+    it("update doit retourner null pour un id invalide", () => {
+      expect(TaskModel.update("12abc", { title: "hack" })).toBeNull()
+    })
+
+    it("delete doit retourner null pour un id invalide", () => {
+      expect(TaskModel.delete("1.9")).toBeNull()
+    })
+  })
+})
+
+describe("Routes /api/tasks/:id — Bug #10 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    app = require("../app")
+  })
+
+  const auth = { "x-api-key": API_KEY }
+
+  it.each([
+    ["GET", "/api/tasks/12abc", null],
+    ["GET", "/api/tasks/1.9", null],
+    ["PUT", "/api/tasks/12abc", { title: "x" }],
+    ["PATCH", "/api/tasks/1.9/move", { status: "todo" }],
+    ["DELETE", "/api/tasks/0x10", null],
+  ])("%s %s doit renvoyer 404 pour id invalide", async (method, url, body) => {
+    const req = request(app)[method.toLowerCase()](url).set(auth)
+    const response = body ? await req.send(body) : await req
+
+    expect(response.status).toBe(404)
+    expect(response.body.success).toBe(false)
+    expect(response.body.error).toBe("Task not found")
+  })
+
+  it("GET /api/tasks/12 doit renvoyer la tâche 12 (référence)", async () => {
+    const response = await request(app).get("/api/tasks/12").set(auth)
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.id).toBe(12)
+  })
+
+  it("ne doit pas modifier la tâche 12 via PUT sur /api/tasks/12abc", async () => {
+    const before = await request(app).get("/api/tasks/12").set(auth)
+    const originalTitle = before.body.data.title
+
+    await request(app)
+      .put("/api/tasks/12abc")
+      .set(auth)
+      .send({ title: "Titre piraté" })
+
+    const after = await request(app).get("/api/tasks/12").set(auth)
+
+    expect(after.body.data.title).toBe(originalTitle)
+  })
+})
