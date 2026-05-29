@@ -1200,3 +1200,142 @@ describe("POST/PUT dueDate — Bug #11 (intégration)", () => {
     expect(response.body.data.dueDate).toBe("2026-08-20")
   })
 })
+
+describe("tasksController — couverture complète", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      findAll: jest.fn(),
+      findById: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      getAll: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+    req = { params: {}, query: {}, body: {} }
+    res = mockRes()
+  })
+
+  it("getTasks doit renvoyer les tâches filtrées", () => {
+    const tasks = [{ id: 1, title: "A" }]
+    TaskModel.findAll.mockReturnValue(tasks)
+    req.query = { status: "todo", assignee: "alice", priority: "HIGH" }
+
+    tasksController.getTasks(req, res)
+
+    expect(TaskModel.findAll).toHaveBeenCalledWith({
+      status: "todo",
+      assignee: "alice",
+      priority: "HIGH",
+    })
+    expect(res.json).toHaveBeenCalledWith({ success: true, data: tasks })
+  })
+
+  it("getTaskById doit renvoyer 404 si la tâche est introuvable", () => {
+    TaskModel.findById.mockReturnValue(undefined)
+    req.params.id = "99"
+
+    tasksController.getTaskById(req, res)
+
+    expect(res.status).toHaveBeenCalledWith(404)
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      error: "Task not found",
+    })
+  })
+
+  it("getTaskById doit renvoyer la tâche", () => {
+    const task = { id: 1, title: "Existante" }
+    TaskModel.findById.mockReturnValue(task)
+    req.params.id = "1"
+
+    tasksController.getTaskById(req, res)
+
+    expect(res.json).toHaveBeenCalledWith({ success: true, data: task })
+  })
+
+  it("deleteTask doit renvoyer la tâche supprimée", () => {
+    const deleted = { id: 1, title: "Supprimée" }
+    TaskModel.delete.mockReturnValue(deleted)
+    req.params.id = "1"
+
+    tasksController.deleteTask(req, res)
+
+    expect(TaskModel.delete).toHaveBeenCalledWith("1")
+    expect(res.json).toHaveBeenCalledWith({ success: true, data: deleted })
+    expect(res.status).not.toHaveBeenCalled()
+  })
+
+  it("getStats doit exclure les dueDate invalides du compteur overdue", () => {
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date("2026-05-29T12:00:00.000Z"))
+    TaskModel.getAll.mockReturnValue([
+      { id: 1, status: "todo", dueDate: "pas-une-date" },
+      { id: 2, status: "todo", dueDate: "2020-01-01" },
+    ])
+
+    tasksController.getStats(req, res)
+
+    expect(res.json).toHaveBeenCalledWith({
+      success: true,
+      data: {
+        total: 2,
+        byStatus: { todo: 2 },
+        byPriority: { undefined: 2 },
+        overdue: 1,
+      },
+    })
+    jest.useRealTimers()
+  })
+
+  it("createTask doit rejeter une dueDate non string", () => {
+    req.body = { title: "Test", dueDate: 20260615 }
+
+    tasksController.createTask(req, res)
+
+    expect(TaskModel.create).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(400)
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      error: DUE_DATE_INVALID,
+    })
+  })
+})
+
+describe("DELETE /api/tasks/:id — intégration", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  const auth = { "x-api-key": API_KEY }
+
+  it("doit supprimer une tâche créée et la rendre inaccessible", async () => {
+    const created = await request(app)
+      .post("/api/tasks")
+      .set(auth)
+      .send({ title: "Tâche à supprimer" })
+
+    const id = created.body.data.id
+
+    const deleted = await request(app).delete(`/api/tasks/${id}`).set(auth)
+
+    expect(deleted.status).toBe(200)
+    expect(deleted.body.data).toMatchObject({ id, title: "Tâche à supprimer" })
+
+    const after = await request(app).get(`/api/tasks/${id}`).set(auth)
+
+    expect(after.status).toBe(404)
+    expect(after.body.error).toBe("Task not found")
+  })
+})

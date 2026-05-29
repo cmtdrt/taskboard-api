@@ -176,6 +176,74 @@ describe("TaskModel — Bug #10 (corrigé — id entier strict)", () => {
     it("delete doit retourner null pour un id invalide", () => {
       expect(TaskModel.delete("1.9")).toBeNull()
     })
+
+    it("delete doit retourner null pour un id hors safe integer", () => {
+      expect(TaskModel.delete("90071992547409990000")).toBeNull()
+    })
+  })
+})
+
+describe("TaskModel — couverture complète", () => {
+  let TaskModel
+
+  beforeEach(() => {
+    TaskModel = loadFreshModel()
+  })
+
+  it("findAll doit filtrer par status", () => {
+    const expected = seedTasks.filter((t) => t.status === "todo").length
+
+    expect(expected).toBeGreaterThan(0)
+    expect(TaskModel.findAll({ status: "todo" })).toHaveLength(expected)
+    expect(
+      TaskModel.findAll({ status: "todo" }).every((t) => t.status === "todo")
+    ).toBe(true)
+  })
+
+  it("findAll doit filtrer par assignee", () => {
+    const assignee = seedTasks.find((t) => t.assignee)?.assignee
+    const expected = seedTasks.filter((t) => t.assignee === assignee).length
+
+    expect(assignee).toBeDefined()
+    expect(expected).toBeGreaterThan(0)
+    expect(TaskModel.findAll({ assignee })).toHaveLength(expected)
+    expect(
+      TaskModel.findAll({ assignee }).every((t) => t.assignee === assignee)
+    ).toBe(true)
+  })
+
+  it("create doit appliquer les valeurs par défaut", () => {
+    const task = TaskModel.create({ title: "Tâche minimale" })
+
+    expect(task.description).toBe("")
+    expect(task.status).toBe("todo")
+    expect(task.priority).toBe("MEDIUM")
+    expect(task.assignee).toBeNull()
+    expect(task.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+  })
+
+  it("delete doit supprimer une tâche existante", () => {
+    const created = TaskModel.create({ title: "À supprimer" })
+    const deleted = TaskModel.delete(String(created.id))
+
+    expect(deleted).toEqual(created)
+    expect(TaskModel.findById(created.id)).toBeUndefined()
+  })
+
+  it("delete doit retourner null pour un id inconnu", () => {
+    expect(TaskModel.delete("999999")).toBeNull()
+  })
+
+  it("getAll doit retourner toutes les tâches", () => {
+    expect(TaskModel.getAll().length).toBe(seedTasks.length)
+  })
+
+  it("findAll sans filtre doit renvoyer toutes les tâches", () => {
+    expect(TaskModel.findAll()).toHaveLength(seedTasks.length)
+  })
+
+  it("update doit retourner null pour un id valide mais inconnu", () => {
+    expect(TaskModel.update("999999", { title: "Introuvable" })).toBeNull()
   })
 })
 
