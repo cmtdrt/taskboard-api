@@ -565,3 +565,131 @@ describe("POST /api/tasks — Bug #5 (intégration)", () => {
     expect(response.body.data.priority).toBe("MEDIUM")
   })
 })
+
+describe("createTask — Bug #6 (title vide ou espaces POST)", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      create: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+
+    req = { body: {} }
+    res = mockRes()
+  })
+
+  describe("comportement attendu", () => {
+    it.each(["   ", "\t", "\n", "  \t  "])(
+      "devrait retourner 400 pour un title composé uniquement d'espaces : %j",
+      (title) => {
+        req.body = { title }
+
+        tasksController.createTask(req, res)
+
+        expect(TaskModel.create).not.toHaveBeenCalled()
+        expect(res.status).toHaveBeenCalledWith(400)
+        expect(res.json).toHaveBeenCalledWith({
+          success: false,
+          error: TITLE_REQUIRED,
+        })
+      }
+    )
+  })
+
+  describe("référence", () => {
+    it("devrait retourner 400 pour un title vide", () => {
+      req.body = { title: "" }
+
+      tasksController.createTask(req, res)
+
+      expect(TaskModel.create).not.toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: TITLE_REQUIRED,
+      })
+    })
+
+    it("devrait retourner 400 si title est absent", () => {
+      req.body = {}
+
+      tasksController.createTask(req, res)
+
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        error: TITLE_REQUIRED,
+      })
+    })
+
+    it("devrait créer une tâche avec un title non vide", () => {
+      const created = { id: 40, title: "Titre valide", status: "todo", priority: "MEDIUM" }
+      TaskModel.create.mockReturnValue(created)
+      req.body = { title: "Titre valide" }
+
+      tasksController.createTask(req, res)
+
+      expect(TaskModel.create).toHaveBeenCalled()
+      expect(res.status).toHaveBeenCalledWith(201)
+    })
+  })
+})
+
+describe("POST /api/tasks — Bug #6 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  const authHeader = { "x-api-key": API_KEY }
+
+  it('devrait rejeter { "title": "   " } avec 400', async () => {
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({ title: "   " })
+
+    expect(response.status).toBe(400)
+    expect(response.body).toEqual({
+      success: false,
+      error: TITLE_REQUIRED,
+    })
+  })
+
+  it("ne doit pas créer de tâche avec un title uniquement composé d'espaces", async () => {
+    const before = await request(app).get("/api/tasks").set(authHeader)
+    const countBefore = before.body.data.length
+
+    await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({ title: "   " })
+
+    const after = await request(app).get("/api/tasks").set(authHeader)
+    const whitespaceTitles = after.body.data.filter(
+      (t) => typeof t.title === "string" && t.title.trim() === ""
+    )
+
+    expect(after.body.data.length).toBe(countBefore)
+    expect(whitespaceTitles).toHaveLength(0)
+  })
+
+  it("devrait créer une tâche avec un title valide", async () => {
+    const response = await request(app)
+      .post("/api/tasks")
+      .set(authHeader)
+      .send({ title: "Tâche bug 6 OK" })
+
+    expect(response.status).toBe(201)
+    expect(response.body.data.title).toBe("Tâche bug 6 OK")
+  })
+})
