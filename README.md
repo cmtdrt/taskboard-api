@@ -1,4 +1,4 @@
-# Taskboard API
+# Taskboard API (PERRONIÉ Maxence et DROUET Clément)
 
 API REST de gestion de tâches type kanban développée avec Express.js.
 
