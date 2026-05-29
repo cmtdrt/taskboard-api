@@ -21,7 +21,7 @@ const tasksController = {
   createTask(req, res) {
     const { title, description, status, priority, assignee, dueDate } = req.body
 
-    if (!title) {
+    if (!title || !String(title).trim()) {
       return res
         .status(400)
         .json({ success: false, error: "Title is required" })

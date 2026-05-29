@@ -566,7 +566,7 @@ describe("POST /api/tasks — Bug #5 (intégration)", () => {
   })
 })
 
-describe("createTask — Bug #6 (title vide ou espaces POST)", () => {
+describe("createTask — Bug #6 (corrigé — title vide ou espaces POST)", () => {
   let TaskModel
   let tasksController
   let req
