@@ -911,17 +911,19 @@ describe("GET /api/tasks/stats — Bug #8 (intégration)", () => {
   })
 
   it("ne doit pas inclure les tâches dueDate null dans overdue (seed)", async () => {
-    const expectedOverdue = countOverdueExcludingNullDueDate(seedTasks)
+    const overdueWithoutNull = countOverdueExcludingNullDueDate(seedTasks)
+    const overdueExpected = countOverdueExpected(seedTasks)
     const buggyOverdue = countOverdueWithBuggyLogic(seedTasks)
 
     expect(NULL_DUE_DATE_TASK_IDS).toHaveLength(4)
-    expect(buggyOverdue).toBeGreaterThanOrEqual(expectedOverdue + 4)
+    expect(buggyOverdue).toBeGreaterThanOrEqual(overdueWithoutNull + 4)
 
     const response = await request(app).get("/api/tasks/stats")
 
     expect(response.status).toBe(200)
     expect(response.body.success).toBe(true)
-    expect(response.body.data.overdue).toBe(expectedOverdue)
+    expect(response.body.data.overdue).toBe(overdueExpected)
+    expect(response.body.data.overdue).toBeLessThan(overdueWithoutNull)
     expect(response.body.data.overdue).toBeLessThan(buggyOverdue)
   })
 
@@ -936,10 +938,10 @@ describe("GET /api/tasks/stats — Bug #8 (intégration)", () => {
 })
 
 /**
- * Bug #9 — tâches done incluses dans overdue (stats).
+ * Bug #9 (corrigé) — tâches done exclues de overdue (stats).
  * npm test -- --testPathPattern=tasks.controller.test.js
  */
-describe("getStats — Bug #9 (tâches done exclues de overdue)", () => {
+describe("getStats — Bug #9 (corrigé — tâches done exclues de overdue)", () => {
   let TaskModel
   let tasksController
   let req
