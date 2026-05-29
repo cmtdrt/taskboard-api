@@ -1,0 +1,435 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Taskboard API",
+    "description": "Collection pour tester l'API REST Taskboard (kanban).\n\n**Prérequis** : lancer le serveur avec `npm start` (port 3000 par défaut).\n\n**Authentification** : header `api-key` sur toutes les routes sauf `GET /stats`.\nValeur par défaut : `secret-key-123` (variable `apiKey`).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "apiKey",
+      "value": "secret-key-123"
+    },
+    {
+      "key": "taskId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Statistiques (public)",
+      "item": [
+        {
+          "name": "GET Stats du board",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "stats"]
+            },
+            "description": "Route publique — aucune clé API requise.\nRetourne total, répartition par statut/priorité et nombre de tâches en retard."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tâches",
+      "item": [
+        {
+          "name": "GET Liste des tâches",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}",
+                "description": "Clé API (obligatoire sauf /stats)"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            },
+            "description": "Liste toutes les tâches sans filtre."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Liste — filtre status=todo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?status=todo",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "todo",
+                  "description": "todo | doing | done"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Liste — filtre assignee=alice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?assignee=alice",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
+              "query": [
+                {
+                  "key": "assignee",
+                  "value": "alice"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Liste — filtre priority=HIGH",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?priority=HIGH",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
+              "query": [
+                {
+                  "key": "priority",
+                  "value": "HIGH",
+                  "description": "LOW | MEDIUM | HIGH"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Détail d'une tâche",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            },
+            "description": "Modifier la variable `taskId` (ex. 1 à 30 depuis le seed)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST Créer une tâche",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Implémenter l'authentification\",\n  \"description\": \"Mettre en place JWT\",\n  \"status\": \"todo\",\n  \"priority\": \"HIGH\",\n  \"assignee\": \"alice\",\n  \"dueDate\": \"2026-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            },
+            "description": "Champs obligatoires : `title`.\nStatuts : todo, doing, done.\nPriorités : LOW, MEDIUM, HIGH."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT Modifier une tâche",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Implémenter l'authentification (mise à jour)\",\n  \"description\": \"Mettre en place JWT + refresh tokens\",\n  \"status\": \"doing\",\n  \"priority\": \"MEDIUM\",\n  \"assignee\": \"bob\",\n  \"dueDate\": \"2026-07-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            },
+            "description": "Fusion partielle : seuls les champs envoyés sont mis à jour."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Déplacer une tâche (changer de colonne)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"done\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/move",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}", "move"]
+            },
+            "description": "Change uniquement le statut (todo → doing → done)."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE Supprimer une tâche",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Erreurs (exemples)",
+      "item": [
+        {
+          "name": "GET Sans api-key (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            },
+            "description": "Doit retourner 401 Unauthorized."
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tâche inexistante (404)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "99999"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Sans title (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Tâche sans titre\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Move sans status (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "api-key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/move",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}", "move"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
