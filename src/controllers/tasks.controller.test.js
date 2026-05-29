@@ -693,3 +693,128 @@ describe("POST /api/tasks — Bug #6 (intégration)", () => {
     expect(response.body.data.title).toBe("Tâche bug 6 OK")
   })
 })
+
+const TASK_3_CREATED_AT = "2024-01-10T10:00:00Z"
+const FAKE_CREATED_AT = "2099-01-01T00:00:00Z"
+
+/**
+ * Bug #7 — createdAt modifiable via PUT (champ immuable).
+ * npm test -- --testPathPattern=tasks.controller.test.js
+ */
+describe("updateTask — Bug #7 (createdAt immuable)", () => {
+  let TaskModel
+  let tasksController
+  let req
+  let res
+
+  const existingTask = {
+    id: 3,
+    title: "Implémenter l'API REST",
+    status: "doing",
+    priority: "HIGH",
+    assignee: "alice",
+    createdAt: TASK_3_CREATED_AT,
+  }
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.mock("../models/tasks.model", () => ({
+      findById: jest.fn(),
+      update: jest.fn(),
+    }))
+    TaskModel = require("../models/tasks.model")
+    tasksController = require("./tasks.controller")
+
+    req = { params: { id: "3" }, body: {} }
+    res = mockRes()
+    TaskModel.findById.mockReturnValue({ ...existingTask })
+  })
+
+  describe("comportement attendu", () => {
+    it("ne doit pas transmettre createdAt à TaskModel.update", () => {
+      req.body = { createdAt: FAKE_CREATED_AT }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).toHaveBeenCalledWith("3", {})
+      expect(TaskModel.update.mock.calls[0][1]).not.toHaveProperty("createdAt")
+    })
+
+    it("doit ignorer createdAt tout en appliquant les autres champs valides", () => {
+      const updated = {
+        ...existingTask,
+        title: "Titre mis à jour",
+        createdAt: TASK_3_CREATED_AT,
+      }
+      TaskModel.update.mockReturnValue(updated)
+      req.body = { title: "Titre mis à jour", createdAt: FAKE_CREATED_AT }
+
+      tasksController.updateTask(req, res)
+
+      expect(TaskModel.update).toHaveBeenCalledWith("3", { title: "Titre mis à jour" })
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        data: expect.objectContaining({
+          title: "Titre mis à jour",
+          createdAt: TASK_3_CREATED_AT,
+        }),
+      })
+    })
+  })
+})
+
+describe("PUT /api/tasks/:id — Bug #7 (intégration)", () => {
+  let app
+
+  beforeEach(() => {
+    jest.resetModules()
+    jest.unmock("../models/tasks.model")
+    app = require("../app")
+  })
+
+  const authHeader = { "x-api-key": API_KEY }
+
+  it("ne doit pas modifier createdAt via PUT", async () => {
+    const response = await request(app)
+      .put("/api/tasks/3")
+      .set(authHeader)
+      .send({ createdAt: FAKE_CREATED_AT })
+
+    expect(response.status).toBe(200)
+    expect(response.body.data.createdAt).toBe(TASK_3_CREATED_AT)
+    expect(response.body.data.createdAt).not.toBe(FAKE_CREATED_AT)
+  })
+
+  it("doit conserver createdAt d'origine après GET", async () => {
+    await request(app)
+      .put("/api/tasks/3")
+      .set(authHeader)
+      .send({ createdAt: FAKE_CREATED_AT })
+
+    const task = await request(app)
+      .get("/api/tasks/3")
+      .set(authHeader)
+
+    expect(task.status).toBe(200)
+    expect(task.body.data.createdAt).toBe(TASK_3_CREATED_AT)
+  })
+
+  it("ne doit pas permettre de modifier id via PUT", async () => {
+    const before = await request(app)
+      .get("/api/tasks/3")
+      .set(authHeader)
+
+    await request(app)
+      .put("/api/tasks/3")
+      .set(authHeader)
+      .send({ id: 99999, createdAt: FAKE_CREATED_AT })
+
+    const after = await request(app)
+      .get("/api/tasks/3")
+      .set(authHeader)
+
+    expect(after.body.data.id).toBe(3)
+    expect(after.body.data.id).toBe(before.body.data.id)
+    expect(after.body.data.createdAt).toBe(TASK_3_CREATED_AT)
+  })
+})
