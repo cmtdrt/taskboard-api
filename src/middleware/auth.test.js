@@ -3,12 +3,7 @@ const express = require("express")
 const authMiddleware = require("./auth")
 
 /**
- * Bug #1 — Le README documente le header `x-api-key`,
- * mais le middleware lit `api-key`.
- * Les tests ci-dessous utilisent `x-api-key` (comportement attendu).
- * Ils doivent échouer tant que le code n'est pas corrigé.
- * 
- * Pour lancer les tests, il faut faire :
+ * Bug #1 (corrigé) — Authentification via `x-api-key` (README).
  * npm test -- --testPathPattern=auth.test.js
  */
 
@@ -20,7 +15,7 @@ function createProtectedApp() {
   return app
 }
 
-describe("authMiddleware — Bug #1 (header x-api-key attendu par le README)", () => {
+describe("authMiddleware — header x-api-key (README)", () => {
   let req
   let res
   let next
@@ -137,48 +132,6 @@ describe("authMiddleware — Bug #1 (header x-api-key attendu par le README)", (
   })
 })
 
-describe("authMiddleware — couverture branche api-key (implémentation actuelle)", () => {
-  /**
-   * Tant que le code lit `api-key`, ces tests couvrent les branches
-   * non atteignables avec seul `x-api-key` (clé présente mais invalide, next()).
-   * À supprimer ou fusionner après correction du bug #1.
-   */
-  let req
-  let res
-  let next
-
-  beforeEach(() => {
-    req = { headers: {} }
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    }
-    next = jest.fn()
-  })
-
-  it("devrait retourner 401 lorsque api-key est présent mais invalide", () => {
-    req.headers["api-key"] = "mauvaise-cle"
-
-    authMiddleware(req, res, next)
-
-    expect(next).not.toHaveBeenCalled()
-    expect(res.status).toHaveBeenCalledWith(401)
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: "Unauthorized: invalid or missing API key",
-    })
-  })
-
-  it("devrait appeler next() lorsque api-key est valide (code actuel)", () => {
-    req.headers["api-key"] = "secret-key-123"
-
-    authMiddleware(req, res, next)
-
-    expect(next).toHaveBeenCalledTimes(1)
-    expect(res.status).not.toHaveBeenCalled()
-  })
-})
-
 describe("authMiddleware — variable d'environnement API_KEY", () => {
   const originalApiKey = process.env.API_KEY
 
@@ -196,7 +149,7 @@ describe("authMiddleware — variable d'environnement API_KEY", () => {
     jest.resetModules()
 
     const authWithCustomKey = require("./auth")
-    const req = { headers: { "api-key": "cle-personnalisee" } }
+    const req = { headers: { "x-api-key": "cle-personnalisee" } }
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -214,7 +167,7 @@ describe("authMiddleware — variable d'environnement API_KEY", () => {
     jest.resetModules()
 
     const authWithCustomKey = require("./auth")
-    const req = { headers: { "api-key": "secret-key-123" } }
+    const req = { headers: { "x-api-key": "secret-key-123" } }
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),

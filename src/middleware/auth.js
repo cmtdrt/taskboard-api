@@ -1,7 +1,7 @@
 const VALID_API_KEY = process.env.API_KEY || "secret-key-123"
 
 function authMiddleware(req, res, next) {
-  const apiKey = req.headers["api-key"]
+  const apiKey = req.headers["x-api-key"]
 
   if (!apiKey || apiKey !== VALID_API_KEY) {
     return res.status(401).json({
