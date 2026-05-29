@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "name": "Taskboard API",
-    "description": "Collection pour tester l'API REST Taskboard (kanban).\n\n**Prérequis** : lancer le serveur avec `npm start` (port 3000 par défaut).\n\n**Authentification** : header `api-key` sur toutes les routes sauf `GET /stats`.\nValeur par défaut : `secret-key-123` (variable `apiKey`).",
+    "description": "Collection pour tester l'API REST Taskboard (kanban).\n\n**Prérequis** : lancer le serveur avec `npm start` (port 3000 par défaut).\n\n**Authentification** : header `x-api-key` sur toutes les routes sauf `GET /stats`.\nValeur par défaut : `secret-key-123` (variable `apiKey`).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -60,7 +60,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}",
                 "description": "Clé API (obligatoire sauf /stats)"
               }
@@ -84,7 +84,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -113,7 +113,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -141,7 +141,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -170,7 +170,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -197,7 +197,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -233,7 +233,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -269,7 +269,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -301,7 +301,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -347,7 +347,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -373,7 +373,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
@@ -408,7 +408,7 @@
                 "value": "application/json"
               },
               {
-                "key": "api-key",
+                "key": "x-api-key",
                 "value": "{{apiKey}}"
               }
             ],
