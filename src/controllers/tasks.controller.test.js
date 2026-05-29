@@ -399,7 +399,7 @@ describe("PUT /api/tasks/:id — Bug #4 (intégration)", () => {
   })
 })
 
-describe("createTask — Bug #5 (validation priority POST)", () => {
+describe("createTask — Bug #5 (corrigé — validation priority POST)", () => {
   let TaskModel
   let tasksController
   let req

@@ -34,6 +34,13 @@ const tasksController = {
       })
     }
 
+    if (priority !== undefined && !VALID_PRIORITIES.includes(priority)) {
+      return res.status(400).json({
+        success: false,
+        error: `Priority must be one of: ${VALID_PRIORITIES.join(", ")}`,
+      })
+    }
+
     const task = TaskModel.create({
       title,
       description,
