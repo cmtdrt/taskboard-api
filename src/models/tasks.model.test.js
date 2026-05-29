@@ -17,7 +17,7 @@ function loadFreshModel() {
 }
 
 /**
- * Bug #2 — Filtre priority : casse (README `high`) + `==` au lieu de `===`.
+ * Bug #2 (corrigé) — Filtre priority : casse insensible + comparaison stricte sur string.
  * npm test -- --testPathPattern=tasks.model.test.js
  */
 describe("TaskModel.findAll — Bug #2 (filtre priority)", () => {
