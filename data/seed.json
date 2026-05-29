@@ -1,0 +1,302 @@
+[
+  {
+    "id": 1,
+    "title": "Configurer l'environnement de développement",
+    "description": "Installer Node.js, npm et les dépendances du projet",
+    "status": "done",
+    "priority": "HIGH",
+    "assignee": "alice",
+    "dueDate": "2024-01-10",
+    "createdAt": "2024-01-05T09:00:00Z"
+  },
+  {
+    "id": 2,
+    "title": "Concevoir la base de données",
+    "description": "Créer le schéma ERD et les migrations",
+    "status": "done",
+    "priority": "HIGH",
+    "assignee": "bob",
+    "dueDate": "2024-01-15",
+    "createdAt": "2024-01-05T09:30:00Z"
+  },
+  {
+    "id": 3,
+    "title": "Implémenter l'API REST",
+    "description": "Créer les endpoints CRUD pour les entités principales",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "alice",
+    "dueDate": "2024-02-01",
+    "createdAt": "2024-01-10T10:00:00Z"
+  },
+  {
+    "id": 4,
+    "title": "Écrire les tests unitaires",
+    "description": "Atteindre 80% de couverture de code",
+    "status": "todo",
+    "priority": "MEDIUM",
+    "assignee": "charlie",
+    "dueDate": "2024-02-15",
+    "createdAt": "2024-01-10T11:00:00Z"
+  },
+  {
+    "id": 5,
+    "title": "Mettre en place le CI/CD",
+    "description": "Configurer GitHub Actions pour les tests et le déploiement",
+    "status": "todo",
+    "priority": "MEDIUM",
+    "assignee": "bob",
+    "dueDate": "2024-02-20",
+    "createdAt": "2024-01-12T08:00:00Z"
+  },
+  {
+    "id": 6,
+    "title": "Rédiger la documentation",
+    "description": "Documenter l'API avec Swagger/OpenAPI",
+    "status": "todo",
+    "priority": "LOW",
+    "assignee": "charlie",
+    "dueDate": "2024-03-01",
+    "createdAt": "2024-01-12T09:00:00Z"
+  },
+  {
+    "id": 7,
+    "title": "Optimiser les performances",
+    "description": "Profiler et optimiser les requêtes les plus lentes",
+    "status": "todo",
+    "priority": "LOW",
+    "assignee": "alice",
+    "dueDate": null,
+    "createdAt": "2024-01-15T14:00:00Z"
+  },
+  {
+    "id": 8,
+    "title": "Audit de sécurité",
+    "description": "Analyser les vulnérabilités OWASP Top 10",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "bob",
+    "dueDate": "2024-02-10",
+    "createdAt": "2024-01-20T10:00:00Z"
+  },
+  {
+    "id": 9,
+    "title": "Refactoriser le code legacy",
+    "description": "Améliorer la lisibilité et réduire la dette technique",
+    "status": "todo",
+    "priority": "MEDIUM",
+    "assignee": "charlie",
+    "dueDate": "2024-02-15",
+    "createdAt": "2024-01-22T09:00:00Z"
+  },
+  {
+    "id": 10,
+    "title": "Mettre en place des tests unitaires",
+    "description": "Couvrir les composants critiques avec Vitest",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "alice",
+    "dueDate": "2024-02-20",
+    "createdAt": "2024-01-25T11:30:00Z"
+  },
+  {
+    "id": 11,
+    "title": "Configurer CI/CD",
+    "description": "Automatiser les déploiements avec GitHub Actions",
+    "status": "todo",
+    "priority": "HIGH",
+    "assignee": "bob",
+    "dueDate": "2024-02-25",
+    "createdAt": "2024-01-28T08:45:00Z"
+  },
+  {
+    "id": 12,
+    "title": "Améliorer UX mobile",
+    "description": "Optimiser l’affichage responsive",
+    "status": "done",
+    "priority": "MEDIUM",
+    "assignee": "david",
+    "dueDate": "2024-02-05",
+    "createdAt": "2024-01-18T14:20:00Z"
+  },
+  {
+    "id": 13,
+    "title": "Mettre en cache les requêtes API",
+    "description": "Réduire les appels réseau inutiles",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "charlie",
+    "dueDate": "2024-02-18",
+    "createdAt": "2024-01-26T10:10:00Z"
+  },
+  {
+    "id": 14,
+    "title": "Documenter l’API",
+    "description": "Créer une documentation Swagger complète",
+    "status": "todo",
+    "priority": "LOW",
+    "assignee": "alice",
+    "dueDate": null,
+    "createdAt": "2024-01-30T15:00:00Z"
+  },
+  {
+    "id": 15,
+    "title": "Mettre à jour les dépendances",
+    "description": "Passer aux dernières versions stables",
+    "status": "doing",
+    "priority": "MEDIUM",
+    "assignee": "bob",
+    "dueDate": "2024-02-22",
+    "createdAt": "2024-01-29T13:15:00Z"
+  },
+  {
+    "id": 16,
+    "title": "Configurer monitoring",
+    "description": "Mettre en place des alertes avec Grafana",
+    "status": "todo",
+    "priority": "HIGH",
+    "assignee": "david",
+    "dueDate": "2024-03-01",
+    "createdAt": "2024-01-31T09:50:00Z"
+  },
+  {
+    "id": 17,
+    "title": "Optimiser les images",
+    "description": "Compresser et lazy load les assets",
+    "status": "done",
+    "priority": "LOW",
+    "assignee": "charlie",
+    "dueDate": "2024-02-08",
+    "createdAt": "2024-01-19T12:00:00Z"
+  },
+  {
+    "id": 18,
+    "title": "Ajouter authentification OAuth",
+    "description": "Intégrer Google et GitHub login",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "alice",
+    "dueDate": "2024-02-28",
+    "createdAt": "2024-02-01T10:30:00Z"
+  },
+  {
+    "id": 19,
+    "title": "Nettoyer la base de données",
+    "description": "Supprimer les données obsolètes",
+    "status": "todo",
+    "priority": "MEDIUM",
+    "assignee": "bob",
+    "dueDate": null,
+    "createdAt": "2024-02-02T14:40:00Z"
+  },
+  {
+    "id": 20,
+    "title": "Créer dashboard analytics",
+    "description": "Visualiser les KPIs principaux",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "david",
+    "dueDate": "2024-03-05",
+    "createdAt": "2024-02-03T11:10:00Z"
+  },
+  {
+    "id": 21,
+    "title": "Améliorer SEO",
+    "description": "Optimiser balises meta et structure HTML",
+    "status": "todo",
+    "priority": "MEDIUM",
+    "assignee": "charlie",
+    "dueDate": "2024-03-10",
+    "createdAt": "2024-02-04T09:25:00Z"
+  },
+  {
+    "id": 22,
+    "title": "Mettre en place logs centralisés",
+    "description": "Centraliser avec ELK stack",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "alice",
+    "dueDate": "2024-03-08",
+    "createdAt": "2024-02-05T16:00:00Z"
+  },
+  {
+    "id": 23,
+    "title": "Revoir architecture frontend",
+    "description": "Modulariser les composants React",
+    "status": "todo",
+    "priority": "HIGH",
+    "assignee": "bob",
+    "dueDate": "2024-03-12",
+    "createdAt": "2024-02-06T13:45:00Z"
+  },
+  {
+    "id": 24,
+    "title": "Optimiser bundle JS",
+    "description": "Réduire la taille avec code splitting",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "charlie",
+    "dueDate": "2024-03-07",
+    "createdAt": "2024-02-07T10:20:00Z"
+  },
+  {
+    "id": 25,
+    "title": "Mettre en place i18n",
+    "description": "Gérer plusieurs langues",
+    "status": "todo",
+    "priority": "LOW",
+    "assignee": "david",
+    "dueDate": null,
+    "createdAt": "2024-02-08T15:35:00Z"
+  },
+  {
+    "id": 26,
+    "title": "Créer page 404 personnalisée",
+    "description": "Améliorer l’expérience utilisateur",
+    "status": "done",
+    "priority": "LOW",
+    "assignee": "alice",
+    "dueDate": "2024-02-09",
+    "createdAt": "2024-01-21T11:00:00Z"
+  },
+  {
+    "id": 27,
+    "title": "Mettre en place rate limiting",
+    "description": "Limiter les abus API",
+    "status": "doing",
+    "priority": "HIGH",
+    "assignee": "bob",
+    "dueDate": "2024-03-09",
+    "createdAt": "2024-02-09T09:10:00Z"
+  },
+  {
+    "id": 28,
+    "title": "Optimiser requêtes SQL",
+    "description": "Ajouter index et analyser EXPLAIN",
+    "status": "todo",
+    "priority": "HIGH",
+    "assignee": "charlie",
+    "dueDate": "2024-03-15",
+    "createdAt": "2024-02-10T14:55:00Z"
+  },
+  {
+    "id": 29,
+    "title": "Mettre en place feature flags",
+    "description": "Activer/désactiver fonctionnalités dynamiquement",
+    "status": "doing",
+    "priority": "MEDIUM",
+    "assignee": "david",
+    "dueDate": "2024-03-11",
+    "createdAt": "2024-02-11T12:40:00Z"
+  },
+  {
+    "id": 30,
+    "title": "Audit accessibilité",
+    "description": "Respecter les normes WCAG",
+    "status": "todo",
+    "priority": "MEDIUM",
+    "assignee": "alice",
+    "dueDate": "2024-03-18",
+    "createdAt": "2024-02-12T10:05:00Z"
+  }
+]

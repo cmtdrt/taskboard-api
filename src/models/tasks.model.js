@@ -1,0 +1,66 @@
+const fs = require("fs")
+const path = require("path")
+
+const seedPath = path.join(__dirname, "../../data/seed.json")
+let tasks = JSON.parse(fs.readFileSync(seedPath, "utf-8"))
+let nextId = tasks.reduce((max, t) => Math.max(max, t.id), 0) + 1
+
+const TaskModel = {
+  findAll(filters = {}) {
+    let result = tasks
+
+    if (filters.status) {
+      result = result.filter((t) => t.status === filters.status)
+    }
+
+    if (filters.assignee) {
+      result = result.filter((t) => t.assignee === filters.assignee)
+    }
+
+    if (filters.priority) {
+      result = result.filter((t) => t.priority == filters.priority)
+    }
+
+    return result
+  },
+
+  findById(id) {
+    return tasks.find((t) => t.id === parseInt(id))
+  },
+
+  create(data) {
+    const task = {
+      id: nextId++,
+      title: data.title,
+      description: data.description || "",
+      status: data.status || "todo",
+      priority: data.priority || "MEDIUM",
+      assignee: data.assignee || null,
+      dueDate: data.dueDate,
+      createdAt: new Date().toISOString(),
+    }
+    tasks.push(task)
+    return task
+  },
+
+  update(id, data) {
+    const idx = tasks.findIndex((t) => t.id === parseInt(id))
+    if (idx === -1) return null
+    tasks[idx] = { ...tasks[idx], ...data, id: tasks[idx].id }
+    return tasks[idx]
+  },
+
+  delete(id) {
+    const idx = tasks.findIndex((t) => t.id === parseInt(id))
+    if (idx === -1) return null
+    const deleted = tasks[idx]
+    tasks.splice(idx, 1)
+    return deleted
+  },
+
+  getAll() {
+    return tasks
+  },
+}
+
+module.exports = TaskModel
