@@ -126,20 +126,4 @@
 
 ---
 
-## Synthèse
-
-| # | Zone | Statut |
-|---|------|--------|
-| 1 | Doc / auth | Corrigé |
-| 2 | Filtre `priority` | Corrigé |
-| 3 | `move` | Corrigé |
-| 4 | `PUT` (status, priority, title) | Corrigé |
-| 5 | `POST` priority | Corrigé |
-| 6 | `POST` title | Corrigé |
-| 7 | `PUT` `createdAt` | Corrigé |
-| 8 | `stats` / `dueDate` null | Corrigé |
-| 9 | `stats` / tâches `done` | Corrigé |
-| 10 | `:id` / `parseInt` | Corrigé |
-| 11 | `dueDate` format | Corrigé |
-
-**Total : 11 bugs** (anciens #7 fusionné dans #4 ; **tous corrigés**).
+**Total : 11 bugs**
