@@ -18,7 +18,7 @@
 | | |
 |---|---|
 | **Fichiers** | `README.md` (l. 28), `src/models/tasks.model.js` (l. 20-27) |
-| **Description** | (1) Le README propose `?priority=high` en minuscules alors que le seed stocke `HIGH`, `MEDIUM`, `LOW` : comparaison **sensible à la casse**. (2) Le filtre utilise `t.priority == filters.priority` (égalité **faible**) au lieu de `===` comme pour `status` et `assignee`, ce qui autorise des correspondances par coercition de type (ex. priorité `0` en base et filtre `"0"`). |
+| **Description** | (1) Le README propose `?priority=high` en minuscules alors que le seed stocke `HIGH`, `MEDIUM`, `LOW` : comparaison **sensible à la casse**. (2) Le filtre utilise `t.priority == filters.priority` (égalité **faible**) au lieu de `===` comme pour `status` et `assignee` |
 | **Impact** | `GET /api/tasks?priority=high` renvoie **0 résultat** alors que `?priority=HIGH` fonctionne ; risque de faux positifs si les types diffèrent ; incohérence de robustesse dans `findAll`. |
 | **Reproduction** | `?priority=high` → 0 tâche vs `?priority=HIGH` → 15 tâches. Mettre une tâche avec `priority: 0` (nombre) puis `findAll({ priority: "0" })` → match avec `==`, pas avec `===`. |
 | **Correction typique** | Normaliser la casse (`toUpperCase()` des deux côtés) et comparer avec `===`. |
@@ -30,7 +30,7 @@
 | | |
 |---|---|
 | **Fichier** | `src/controllers/tasks.controller.js` (`moveTask`) |
-| **Description** | `moveTask` vérifie seulement la présence de `status`, pas qu'il appartient à `VALID_STATUSES` (`todo`, `doing`, `done`). La création (`createTask`) valide le statut, pas le déplacement. |
+| **Description** | `moveTask` vérifie seulement la présence de `status`, pas qu'il appartient à `VALID_STATUSES` (`todo`, `doing`, `done`). |
 | **Impact** | On peut corrompre le board avec des statuts invalides (`invalid`, `archived`, etc.). |
 | **Reproduction** | `PATCH /api/tasks/1/move` avec body `{ "status": "invalid" }` → 200 et tâche mise à jour. |
 
@@ -63,7 +63,7 @@
 | | |
 |---|---|
 | **Fichier** | `src/controllers/tasks.controller.js` (`createTask`) |
-| **Description** | La condition `if (!title)` rejette `null` / `""` mais accepte `"   "` (chaîne truthy non vide après trim). |
+| **Description** | La condition `if (!title)` rejette `null` / `""` mais accepte `"   "`. |
 | **Impact** | Création de tâches sans titre lisible. |
 | **Reproduction** | `POST` avec `{ "title": "   " }` → 201. |
 
@@ -75,7 +75,7 @@
 |---|---|
 | **Fichiers** | `src/controllers/tasks.controller.js` (`updateTask`), `src/models/tasks.model.js` (`update`) |
 | **Description** | `TaskModel.update` étend la tâche avec tout le corps de la requête ; seul `id` est protégé, pas `createdAt`. |
-| **Impact** | Falsification de la date de création (audit / tri faux). |
+| **Impact** | La date de création est modifiable. |
 | **Reproduction** | `PUT /api/tasks/3` avec `{ "createdAt": "2099-01-01T00:00:00Z" }` → date modifiée. |
 
 ---
@@ -86,8 +86,8 @@
 |---|---|
 | **Fichier** | `src/controllers/tasks.controller.js` (`getStats`) |
 | **Description** | Pour `dueDate: null`, `new Date(null)` vaut le **1er janvier 1970**, toujours `< now`, donc compté comme en retard. |
-| **Impact** | Le compteur `overdue` est gonflé (4 tâches du seed ont `dueDate: null`). |
-| **Reproduction** | Appeler `/stats` et vérifier que les tâches 7, 14, 19, 25 contribuent à `overdue` sans date d'échéance. |
+| **Impact** | Le nombre de tâches en retard est faussé. |
+| **Reproduction** | Créer une tâche avec une dueDate null puis vérifier que la tâche est considérée comme en retard. |
 
 ---
 
@@ -108,10 +108,8 @@
 |---|---|
 | **Fichiers** | `src/models/tasks.model.js`, utilisé par `getTaskById`, `updateTask`, `deleteTask`, `moveTask` |
 | **Description** | `findById` (et `update` / `delete`) utilisent `parseInt(id)` sans vérifier que `req.params.id` est un entier **strict**. `parseInt` s'arrête au premier caractère non numérique : `"12abc"` → `12`, `"1.9"` → `1`, `"0x10"` → `16`. |
-| **Impact** | Des URLs invalides renvoient quand même une tâche (200) au lieu d'un **404** ou **400** : ambiguïté, risque de confusions côté client, et opérations PUT/DELETE/PATCH sur le mauvais id réel. |
+| **Impact** | Des URLs invalides renvoient quand même une tâche (200) au lieu d'une erreur **404** ou **400** |
 | **Reproduction** | `GET /api/tasks/12abc` → tâche **id 12** ; `GET /api/tasks/1.9` → tâche **id 1**. |
-
-**Correction typique** : valider avec une regex (`/^\d+$/`) ou `Number(id)` + `Number.isInteger` + `String(Number(id)) === id` avant d'interroger le modèle.
 
 ---
 
