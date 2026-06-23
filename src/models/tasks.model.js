@@ -26,11 +26,7 @@ const TaskModel = {
 
     if (filters.priority) {
       const filterPriority = String(filters.priority).toUpperCase()
-      result = result.filter(
-        (t) =>
-          typeof t.priority === "string" &&
-          t.priority.toUpperCase() === filterPriority
-      )
+      result = result.filter((t) => t.priority === filterPriority)
     }
 
     return result
